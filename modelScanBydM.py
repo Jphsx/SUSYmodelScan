@@ -47,7 +47,7 @@ for modelDM in dmlist:
 
 		outname = mType+"_dMcsv/"+mType+"_dM"+str(modelDM)+".csv"
 		fout = open(outname,"w")
-		fout.write("ModelNum m_N2 m_N1 m_C1 dM X0G X0qq X0ll X0nn X1qq X1ln \n")
+		fout.write("ModelNum m_N2 m_N1 m_C1 dM X0G X0qq X0ll X0nn X1qq X1ln X0ee X0mm X0tt X1en X1mn X1tn X0en X0mn X0tn \n")
 
 
 		listname = modelTypeList[ilistlist] 
@@ -71,7 +71,13 @@ for modelDM in dmlist:
 			lep = [ 11,13,15 ]
 			lepnu = [ 11,12,13,14,15,16 ]
 			gamma = [22]
+			ee=[11]
+			mumu=[13]
+			tautau=[15]
 			modelCount=0
+			enu=[11,12]
+			munu=[13,14]
+			taunu=[15,16]
 			for ilist in listoflists:
 				with open(ilist.rstrip()) as f2:
 					slhafiles = f2.readlines()
@@ -82,9 +88,11 @@ for modelDM in dmlist:
 							model = f3.readlines()
 							inMassBlock=False
 							inDecayBlock=False
+							inCharginoBlock=False
 					#for each model store the mass block
 							mass_block_content = []
 							decay_block_content = []
+							chargino_block_content = []
 							for line in model:
 
 					#print(line)
@@ -107,9 +115,18 @@ for modelDM in dmlist:
 						
 									if(inDecayBlock and (str(line2[0])=='#') and (str(line2[1])=='PDG')):
 										inDecayBlock=False
-										break
+										#break
 									if(inDecayBlock):
 										decay_block_content.append(line2)
+										
+								if(len(line2) > 1):
+									if( str(line2[0]) == 'DECAY' and str(line2[1]) == '1000024'):
+										inCharginoBlock=True
+									if(inCharginoBlock and (str(line2[0])=='#') and (str(line2[1])=='PDG')):
+										inCharginoBlock=False
+										#break dont break neutralino2 always after chargino1?
+									if(inCharginoBlock):
+										chargino_block_content.append(line2)
 						
 							
 				#scan mass block
@@ -152,11 +169,26 @@ for modelDM in dmlist:
 							X1lnuBF=getBF(decay_block_content,3,1000024,lepnu)
 					
 							X0g = getBF(decay_block_content, 2, 1000022, gamma)
+							
+							#specific zstar decay
+							x0eeBF=getBF(decay_block_content,3,1000022, ee)
+							x0mumuBF=getBF(decay_block_content,3,1000022, mumu)
+							x0tautauBF=getBF(decay_block_content,3,1000022, tautau)
+							
+							#specific wstar decay(N2->C1+Wstar)
+							x1enBF=getBF(decay_block_content,3,1000024, enu)
+							x1mnBF=getBF(decay_block_content,3,1000024, munu)
+							x1tnBF=getBF(decay_block_content,3,1000024, taunu)
+							
+							#Chargino to Wstar+lsp decay
+							x0enBF=getBF(chargino_block_content,3,1000022, enu)
+							x0mnBF=getBF(chargino_block_content,3,1000022, munu)
+							x0tnBF=getBF(chargino_block_content,3,1000022, taunu)
 					#print("ModelNum m_N2 m_N1 m_C1 dM X0G X0qq X0ll X0nn X1qq X1ln")
 					#print(slha, M_N2, M_N1, M_C1, dM, X0g, X0qqBF, X0llBF, X0nunuBF, X1qqBF, X1lnuBF)
 							mdl = slha.split("/")
 							mdl = mdl[-1].rstrip()
-							cmd = concatToLine([mdl, M_N2, M_N1, M_C1, dM, X0g, X0qqBF, X0llBF, X0nunuBF, X1qqBF, X1lnuBF] )
+							cmd = concatToLine([mdl, M_N2, M_N1, M_C1, dM, X0g, X0qqBF, X0llBF, X0nunuBF, X1qqBF, X1lnuBF, x0eeBF, x0mumuBF, x0tautauBF, x1enBF, x1mnBF, x1tnBF, x0enBF, x0mnBF, x0tnBF] )
 							fout.write(cmd+"\n")
 					#fout.write("%s %d %d %d %d" % (slha, M_N2, M_N1, M_C1, dM))
 					#fout.write("%d %d %d %d %d %d \n" % (X0g, X0qqBF, X0llBF, X0nunuBF, X1qqBF, X1lnuBF))
@@ -167,7 +199,7 @@ for modelDM in dmlist:
 					#	print("models selected = ",modelCount)
 						
 					
-		print("total models selected = ", modelCount, "with model dM = ", modelDM)						
+		print("total models selected = ", modelCount, "with model dM = ", modelDM, "with type: ", mType)						
 		fout.close()
 		f1.close()
 		f2.close()
